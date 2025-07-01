@@ -74,12 +74,15 @@ def main():
             debits_df = df[df["Debit/Credit"] == "Debit"].copy()
             credits_df = df[df["Debit/Credit"] == "Credit"].copy()
 
+
             st.session_state.debits_df = debits_df.copy()
+            st.session_state.credits_df = credits_df.copy()
+
 
             tabl1, tabl2 = st.tabs(["Expenses (Debits)", "Payments (Credits)"])
-            
+
             with tabl1:
-                new_category = st.text_input("New Category Name")
+                new_category = st.text_input("New Cat~egory Name")
                 add_button = st.button("Add Category")
 
                 if add_button and new_category:
@@ -118,10 +121,33 @@ def main():
                             st.session_state.debits_df.at[idx, "Category"] = new_cat
                             add_keyword_to_category(new_cat, details)
 
-                                    
+                st.subheader("Expense Summary")
+                category_totals = st.session_state.debits_df.groupby("Category")["Amount"].sum().reset_index()       
+                category_totals = category_totals.sort_values("Amount", ascending=False)
+
+                st.dataframe(category_totals, 
+                             column_config= {
+                                 "Amount": st.column_config.NumberColumn("Amount", format="%.2f AED")
+                             },
+                             use_container_width=True,
+                             hide_index=True
+                             )      
+                
+                fig = px.pie(
+                    category_totals,
+                    values="Amount",
+                    names="Category",
+                    title="Expenses by Category"
+                )
+                st.plotly_chart(fig,use_container_width=True)
 
             with tabl2:
+                st.subheader("Payment Summary")
+                total_payments = credits_df["Amount"].sum()
+                st.metric("Total Payment", f"{total_payments:,.2f} AED")
                 st.write(credits_df)
+
+ 
             
 
 main()
